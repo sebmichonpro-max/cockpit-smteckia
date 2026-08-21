@@ -8,9 +8,9 @@
 
 \- \[x] Schéma DB : table notes (contenu, projet\_tag, date, statut)
 
-\- \[ ] Capture par dictée (Web Speech API ou équivalent)
+\- \[x] Capture par dictée (Web Speech API ou équivalent)
 
-\- \[ ] Tag de chaque note à un projet existant
+\- \[x] Tag de chaque note à un projet existant
 
 \- \[ ] Export d'une note vers Claude (copier/partager)
 
