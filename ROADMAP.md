@@ -4,7 +4,7 @@
 
 \## Phase 1 — MVP
 
-\- \[ ] Setup projet Next.js + Supabase + déploiement Vercel
+\- \[x] Setup projet Next.js + Supabase + déploiement Vercel
 
 \- \[x] Schéma DB : table notes (contenu, projet\_tag, date, statut)
 
