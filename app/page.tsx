@@ -40,7 +40,11 @@ export default function Home() {
 
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = "fr-FR";
-    recognition.continuous = true;
+    // continuous=true is known to make Chrome re-finalize the same phrase
+    // several times. A single-utterance session restarted on each `onend`
+    // (see below) gives the same "keep listening" behavior without the
+    // duplicated transcript.
+    recognition.continuous = false;
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
