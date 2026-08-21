@@ -6,7 +6,7 @@
 
 \- \[ ] Setup projet Next.js + Supabase + déploiement Vercel
 
-\- \[ ] Schéma DB : table notes (contenu, projet\_tag, date, statut)
+\- \[x] Schéma DB : table notes (contenu, projet\_tag, date, statut)
 
 \- \[ ] Capture par dictée (Web Speech API ou équivalent)
 
