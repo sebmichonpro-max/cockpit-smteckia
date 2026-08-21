@@ -28,6 +28,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const shouldListenRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognitionCtor =
@@ -55,10 +56,44 @@ export default function Home() {
         );
       }
     };
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
+
+    recognition.onerror = (event) => {
+      // "no-speech" fires constantly during normal pauses between phrases;
+      // it is not a real failure, so it must not stop the listening intent.
+      if (event.error === "no-speech" || event.error === "aborted") {
+        return;
+      }
+      shouldListenRef.current = false;
+      setListening(false);
+      const messages: Record<string, string> = {
+        "not-allowed": "Accès au micro refusé. Autorise le micro pour ce site dans les réglages du navigateur.",
+        "audio-capture": "Aucun micro détecté.",
+        network: "Erreur réseau pendant la reconnaissance vocale.",
+      };
+      setError(messages[event.error] ?? `Erreur reconnaissance vocale : ${event.error}`);
+    };
+
+    recognition.onend = () => {
+      // Chrome stops recognition after each silence even with continuous=true,
+      // so it must be restarted automatically while the user still wants to listen.
+      if (shouldListenRef.current) {
+        try {
+          recognition.start();
+        } catch {
+          shouldListenRef.current = false;
+          setListening(false);
+        }
+      } else {
+        setListening(false);
+      }
+    };
 
     recognitionRef.current = recognition;
+
+    return () => {
+      shouldListenRef.current = false;
+      recognition.stop();
+    };
   }, []);
 
   useEffect(() => {
@@ -84,10 +119,12 @@ export default function Home() {
     }
 
     if (listening) {
+      shouldListenRef.current = false;
       recognition.stop();
       setListening(false);
     } else {
       setError(null);
+      shouldListenRef.current = true;
       recognition.start();
       setListening(true);
     }
