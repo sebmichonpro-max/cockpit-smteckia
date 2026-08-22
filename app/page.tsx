@@ -15,6 +15,13 @@ const TILES: Tile[] = [
     accent: "#a78bfa",
     icon: "☰",
   },
+  {
+    href: "/brainstorming",
+    label: "Brainstorming",
+    description: "Sujets et idées en vrac, groupés par thème.",
+    accent: "#fbbf24",
+    icon: "✦",
+  },
 ];
 
 export default function Home() {

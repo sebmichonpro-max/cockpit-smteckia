@@ -18,6 +18,10 @@
 
 \- \[x] Architecture en routes dédiées (`/`, `/note`, `/notes`) + composants réutilisables (`components/`), tableau de bord à tuiles extensible
 
+\- \[x] Module Brainstorming (`/brainstorming`) : sujets + idées liées groupées par sujet, tables `brainstorm\_sujets` / `brainstorm\_idees` (RLS activé comme `notes`)
+
+\- \[x] Boutons "Valider" et "Push vers..." (Claude / Perplexity / Notion / Airtable) sur `/notes` : routes API + variables d'env webhook prêtes, URLs à renseigner dans Make (voir Phase 2)
+
 \- \[ ] Stockage offline + sync au retour réseau
 
 
@@ -26,7 +30,7 @@
 
 \- \[ ] Intégration Airtable (stockage/vue alternative des notes)
 
-\- \[ ] Automatisation Make (dictée → Airtable → notification)
+\- \[ ] Automatisation Make (dictée → Airtable → notification) — brancher les scénarios sur `NOTES\_WEBHOOK\_URL` et `PUSH\_CLAUDE/PERPLEXITY/NOTION/AIRTABLE\_WEBHOOK\_URL`
 
 \- \[ ] Cartographie Miro par projet
 
