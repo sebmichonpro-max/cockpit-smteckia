@@ -16,6 +16,8 @@
 
 \- \[x] Export d'une note vers Claude (copier/partager)
 
+\- \[x] Architecture en routes dédiées (`/`, `/note`, `/notes`) + composants réutilisables (`components/`), tableau de bord à tuiles extensible
+
 \- \[ ] Stockage offline + sync au retour réseau
 
 

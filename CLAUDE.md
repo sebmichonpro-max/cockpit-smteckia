@@ -14,6 +14,24 @@
 
 
 
+\## Architecture / routes
+
+
+
+\- `/` — tableau de bord : grille de tuiles cliquables vers les modules (`components/TileGrid.tsx`), pensée pour accueillir de nouvelles tuiles sans refonte
+
+\- `/note` — saisie d'une nouvelle note (`components/NoteForm.tsx`)
+
+\- `/notes` — liste des notes récentes, avec copie presse-papier par note (`components/NotesList.tsx`)
+
+\- `components/` — composants réutilisables ; les fichiers `app/\*\*/page.tsx` restent de simples assemblages (layout + import de composants), pas de logique métier dedans
+
+\- `lib/projects.ts` — source unique des projets taguables et de leur couleur d'accent
+
+\- `lib/supabase.ts` — client Supabase
+
+
+
 \## Objectif du projet
 
 Outil personnel de gestion de projet / amélioration continue pour Sébastien.
