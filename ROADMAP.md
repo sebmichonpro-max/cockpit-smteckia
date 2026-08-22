@@ -14,7 +14,7 @@
 
 \- \[x] Refonte visuelle : thème sombre façon tech/gaming, couleur distincte par projet (badge + accent du sélecteur)
 
-\- \[ ] Export d'une note vers Claude (copier/partager)
+\- \[x] Export d'une note vers Claude (copier/partager)
 
 \- \[ ] Stockage offline + sync au retour réseau
 

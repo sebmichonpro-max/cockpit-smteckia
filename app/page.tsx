@@ -41,10 +41,19 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadNotes();
   }, []);
+
+  async function copyNote(note: Note) {
+    await navigator.clipboard.writeText(note.contenu);
+    setCopiedId(note.id);
+    setTimeout(() => {
+      setCopiedId((current) => (current === note.id ? null : current));
+    }, 1500);
+  }
 
   async function loadNotes() {
     const { data } = await supabase
@@ -196,6 +205,17 @@ export default function Home() {
                     <span style={{ color: "var(--muted)" }}>
                       {new Date(note.created_at).toLocaleString("fr-FR")}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => copyNote(note)}
+                      className="ml-auto rounded-full border px-2 py-0.5 font-medium transition-colors"
+                      style={{
+                        borderColor: copiedId === note.id ? color : "var(--border)",
+                        color: copiedId === note.id ? color : "var(--muted)",
+                      }}
+                    >
+                      {copiedId === note.id ? "Copié !" : "Copier"}
+                    </button>
                   </div>
                   <p style={{ color: "var(--foreground)" }}>{note.contenu}</p>
                 </li>
