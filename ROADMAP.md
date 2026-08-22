@@ -8,9 +8,11 @@
 
 \- \[x] Schéma DB : table notes (contenu, projet\_tag, date, statut)
 
-\- \[x] Capture par dictée (Web Speech API ou équivalent)
+\- \[x] Capture par dictée native Windows (Win+H) dans un champ texte standard (Web Speech API abandonnée, peu fiable)
 
 \- \[x] Tag de chaque note à un projet existant
+
+\- \[x] Refonte visuelle : thème sombre façon tech/gaming, couleur distincte par projet (badge + accent du sélecteur)
 
 \- \[ ] Export d'une note vers Claude (copier/partager)
 

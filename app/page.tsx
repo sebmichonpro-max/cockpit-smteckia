@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const PROJETS = [
@@ -20,85 +20,27 @@ type Note = {
   created_at: string;
 };
 
+// Une couleur distincte par projet — utilisée pour le badge dans la liste
+// de notes et pour l'accent visuel du sélecteur.
+const PROJECT_COLORS: Record<ProjetTag, string> = {
+  autoscan: "#22d3ee", // cyan
+  "chat-interne": "#a78bfa", // violet
+  cockpit: "#fbbf24", // amber
+  "portail-smteckia": "#f472b6", // pink
+  smapia: "#34d399", // emerald
+};
+const DEFAULT_COLOR = "#8b8b9e";
+
+function projectColor(tag: string): string {
+  return PROJECT_COLORS[tag as ProjetTag] ?? DEFAULT_COLOR;
+}
+
 export default function Home() {
-  const [listening, setListening] = useState(false);
   const [contenu, setContenu] = useState("");
   const [projetTag, setProjetTag] = useState<ProjetTag>("cockpit");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const shouldListenRef = useRef(false);
-
-  useEffect(() => {
-    const SpeechRecognitionCtor =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionCtor) {
-      return;
-    }
-
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = "fr-FR";
-    // continuous=true is known to make Chrome re-finalize the same phrase
-    // several times. A single-utterance session restarted on each `onend`
-    // (see below) gives the same "keep listening" behavior without the
-    // duplicated transcript.
-    recognition.continuous = false;
-    recognition.interimResults = true;
-
-    recognition.onresult = (event) => {
-      let finalTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
-      }
-      if (finalTranscript) {
-        setContenu((prev) =>
-          (prev ? `${prev} ${finalTranscript}` : finalTranscript).trim()
-        );
-      }
-    };
-
-    recognition.onerror = (event) => {
-      // "no-speech" fires constantly during normal pauses between phrases;
-      // it is not a real failure, so it must not stop the listening intent.
-      if (event.error === "no-speech" || event.error === "aborted") {
-        return;
-      }
-      shouldListenRef.current = false;
-      setListening(false);
-      const messages: Record<string, string> = {
-        "not-allowed": "Accès au micro refusé. Autorise le micro pour ce site dans les réglages du navigateur.",
-        "audio-capture": "Aucun micro détecté.",
-        network: "Erreur réseau pendant la reconnaissance vocale.",
-      };
-      setError(messages[event.error] ?? `Erreur reconnaissance vocale : ${event.error}`);
-    };
-
-    recognition.onend = () => {
-      // Chrome stops recognition after each silence even with continuous=true,
-      // so it must be restarted automatically while the user still wants to listen.
-      if (shouldListenRef.current) {
-        try {
-          recognition.start();
-        } catch {
-          shouldListenRef.current = false;
-          setListening(false);
-        }
-      } else {
-        setListening(false);
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      shouldListenRef.current = false;
-      recognition.stop();
-    };
-  }, []);
 
   useEffect(() => {
     loadNotes();
@@ -111,27 +53,6 @@ export default function Home() {
       .order("created_at", { ascending: false })
       .limit(10);
     if (data) setNotes(data);
-  }
-
-  function toggleListening() {
-    const recognition = recognitionRef.current;
-    if (!recognition) {
-      setError(
-        "La dictée vocale n'est pas supportée par ce navigateur. Utilise Chrome ou Edge, ou saisis ta note manuellement."
-      );
-      return;
-    }
-
-    if (listening) {
-      shouldListenRef.current = false;
-      recognition.stop();
-      setListening(false);
-    } else {
-      setError(null);
-      shouldListenRef.current = true;
-      recognition.start();
-      setListening(true);
-    }
   }
 
   async function saveNote() {
@@ -156,91 +77,132 @@ export default function Home() {
     loadNotes();
   }
 
+  const accent = PROJECT_COLORS[projetTag];
+
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center font-sans">
       <main className="flex flex-1 w-full max-w-2xl flex-col gap-8 py-16 px-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+        <h1 className="text-2xl font-semibold tracking-tight bg-gradient-to-r from-cyan-300 via-violet-300 to-pink-300 bg-clip-text text-transparent">
           Cockpit SMTeckIA
         </h1>
 
-        <section className="flex flex-col gap-4 rounded-xl border border-black/[.08] bg-white p-5 dark:border-white/[.145] dark:bg-[#111]">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={toggleListening}
-              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                listening
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-foreground hover:bg-[#383838] dark:hover:bg-[#ccc] dark:text-black"
-              }`}
-              aria-pressed={listening}
+        <section
+          className="flex flex-col gap-4 rounded-2xl border p-5 shadow-[0_0_40px_-20px_rgba(0,0,0,0.8)] transition-colors"
+          style={{
+            backgroundColor: "var(--surface)",
+            borderColor: "var(--border)",
+          }}
+        >
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="note-contenu"
+              className="text-xs font-medium uppercase tracking-wider"
+              style={{ color: "var(--muted)" }}
             >
-              {listening ? "■" : "●"}
-            </button>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              {listening
-                ? "Écoute en cours… clique pour arrêter."
-                : "Clique pour dicter une note."}
-            </div>
+              Note
+            </label>
+            <textarea
+              id="note-contenu"
+              value={contenu}
+              onChange={(e) => setContenu(e.target.value)}
+              placeholder="Écris ou dicte ta note ici (Win+H pour la dictée native Windows)…"
+              rows={6}
+              autoFocus
+              className="w-full resize-none rounded-lg border bg-transparent p-3 text-sm outline-none transition-colors"
+              style={{
+                borderColor: "var(--border)",
+                color: "var(--foreground)",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            />
           </div>
 
-          <textarea
-            value={contenu}
-            onChange={(e) => setContenu(e.target.value)}
-            placeholder="Le texte dicté apparaît ici, modifiable avant sauvegarde…"
-            rows={5}
-            className="w-full resize-none rounded-lg border border-black/[.08] bg-transparent p-3 text-sm text-black outline-none focus:border-black/30 dark:border-white/[.145] dark:text-zinc-50 dark:focus:border-white/40"
-          />
-
           <div className="flex flex-wrap items-center gap-3">
-            <select
-              value={projetTag}
-              onChange={(e) => setProjetTag(e.target.value as ProjetTag)}
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-black dark:border-white/[.145] dark:text-zinc-50"
-            >
-              {PROJETS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <span
+                className="pointer-events-none absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full"
+                style={{ backgroundColor: accent, boxShadow: `0 0 8px 1px ${accent}` }}
+              />
+              <select
+                value={projetTag}
+                onChange={(e) => setProjetTag(e.target.value as ProjetTag)}
+                className="appearance-none rounded-lg border bg-transparent py-2 pl-7 pr-8 text-sm font-medium outline-none transition-colors"
+                style={{
+                  borderColor: accent,
+                  color: "var(--foreground)",
+                  backgroundColor: "var(--surface-alt)",
+                }}
+              >
+                {PROJETS.map((p) => (
+                  <option key={p} value={p} style={{ color: "#111" }}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <button
               type="button"
               onClick={saveNote}
               disabled={saving || !contenu.trim()}
-              className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-[#ccc]"
+              className="rounded-full px-5 py-2 text-sm font-semibold text-black transition-all disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                backgroundColor: accent,
+                boxShadow: saving || !contenu.trim() ? "none" : `0 0 20px -4px ${accent}`,
+              }}
             >
               {saving ? "Sauvegarde…" : "Sauvegarder la note"}
             </button>
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-sm text-red-400">{error}</p>
           )}
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          <h2
+            className="text-xs font-medium uppercase tracking-wider"
+            style={{ color: "var(--muted)" }}
+          >
             Notes récentes
           </h2>
           <ul className="flex flex-col gap-2">
-            {notes.map((note) => (
-              <li
-                key={note.id}
-                className="rounded-lg border border-black/[.08] bg-white p-3 text-sm dark:border-white/[.145] dark:bg-[#111]"
-              >
-                <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  <span className="rounded-full bg-black/[.06] px-2 py-0.5 dark:bg-white/[.08]">
-                    {note.projet_tag}
-                  </span>
-                  <span>{new Date(note.created_at).toLocaleString("fr-FR")}</span>
-                </div>
-                <p className="text-black dark:text-zinc-50">{note.contenu}</p>
-              </li>
-            ))}
+            {notes.map((note) => {
+              const color = projectColor(note.projet_tag);
+              return (
+                <li
+                  key={note.id}
+                  className="rounded-lg border-l-4 border-y border-r p-3 text-sm"
+                  style={{
+                    borderLeftColor: color,
+                    borderTopColor: "var(--border)",
+                    borderRightColor: "var(--border)",
+                    borderBottomColor: "var(--border)",
+                    backgroundColor: "var(--surface)",
+                  }}
+                >
+                  <div className="mb-1 flex items-center gap-2 text-xs">
+                    <span
+                      className="rounded-full px-2 py-0.5 font-medium"
+                      style={{
+                        backgroundColor: `${color}26`,
+                        color,
+                      }}
+                    >
+                      {note.projet_tag}
+                    </span>
+                    <span style={{ color: "var(--muted)" }}>
+                      {new Date(note.created_at).toLocaleString("fr-FR")}
+                    </span>
+                  </div>
+                  <p style={{ color: "var(--foreground)" }}>{note.contenu}</p>
+                </li>
+              );
+            })}
             {notes.length === 0 && (
-              <li className="text-sm text-zinc-500 dark:text-zinc-400">
+              <li className="text-sm" style={{ color: "var(--muted)" }}>
                 Aucune note pour le moment.
               </li>
             )}
